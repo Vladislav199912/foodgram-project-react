@@ -1,4 +1,4 @@
-name: Main GoodFoodGram workflow
+name: Main FoodGram workflow
 
 on:
   push:
