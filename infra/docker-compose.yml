@@ -14,7 +14,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ../backend
     env_file: .env
     volumes:
       - static:/app/static/
@@ -24,7 +24,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
