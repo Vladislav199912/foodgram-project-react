@@ -7,11 +7,11 @@ from django.db import models
 class User(AbstractUser):
 
     email = models.EmailField(
-      verbose_name='Адрес электронной почты',
-      max_length=254,
-      unique=True,
-      blank=False,
-      )
+        'Почта',
+        max_length=254,
+        unique=True,
+        blank=False,
+    )
 
     username = models.CharField(
         'Логин',
@@ -21,25 +21,12 @@ class User(AbstractUser):
     )
 
     first_name = models.CharField(
-        verbose_name='Имя',
         max_length=150,
         blank=True,
     )
-
     last_name = models.CharField(
-        verbose_name='Фамилия',
         max_length=150,
         blank=True,
-    )
-
-    password = models.CharField(
-        verbose_name='Пароль',
-        max_length=150,
-    )
-
-    is_active = models.BooleanField(
-        verbose_name='Активен',
-        default=True,
     )
 
     USERNAME_FIELD = 'email'
@@ -47,52 +34,36 @@ class User(AbstractUser):
         'username',
         'first_name',
         'last_name',
-        'password'
     )
 
     def __str__(self):
-        return f'{self.username}: {self.email}'
+        return self.username[:16]
 
     class Meta:
         ordering = ('id',)
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
-    @property
-    def is_admin(self):
-        return (self.is_superuser or self.role == settings.ADMIN
-                or self.is_staff)
 
-    @property
-    def is_moderator(self):
-        return self.role == settings.MODERATOR
-
-
-class Subscription(models.Model):
-
-    author = models.ForeignKey(
-        verbose_name='Автор рецепта',
-        related_name='subscribes',
-        to=User,
-        on_delete=models.CASCADE,
-    )
-
+class Follow(models.Model):
     user = models.ForeignKey(
-        verbose_name='Подписчики',
-        related_name='subscribers',
-        to=User,
-        on_delete=models.CASCADE,
+        User, on_delete=models.CASCADE,
+        related_name='subscriber', verbose_name='Подписчик'
     )
-
-    data_added = models.DateField(
-        verbose_name='Дата создания подписки',
-        auto_now_add=True,
-        editable=False,
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='subscrib', verbose_name='Подписки'
     )
 
     def __str__(self):
-        return f'{self.user.username}: {self.author.username}'
+        return f'{self.user.username} - {self.author.username}'
 
     class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
+        verbose_name = 'Подписка на авторов'
+        verbose_name_plural = 'Подписки на авторов'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_subscribe'
+            )
+        ]
