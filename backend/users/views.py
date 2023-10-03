@@ -1,5 +1,5 @@
 from api.paginations import LimitPagination
-from api.serializers.users import FollowSerializer, UserSerializer
+from api.serializers import FollowSerializer, UsersSerializer
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
@@ -10,37 +10,37 @@ from rest_framework.response import Response
 from users.models import Follow, User
 
 
-class UserViewSet(UserViewSet):
+class UsersViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly(),)
+    serializer_class = UsersSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     pagination_class = LimitPagination
+    http_method_names = ['get', 'post', 'delete', 'head']
 
     def get_permissions(self):
-        if self.actuon == 'me':
-            self.permission_classes = (IsAuthenticated)
+        if self.action == 'me':
+            self.permission_classes = (IsAuthenticated,)
         return super().get_permissions()
 
     @action(methods=['POST', 'DELETE'],
-            detail=True,)
+            detail=True, )
     def subscribe(self, request, id):
         user = request.user
         author = get_object_or_404(User, id=id)
         subscription = Follow.objects.filter(
-            user=user, author=author
-        )
+            user=user, author=author)
 
-        if request.methdo == 'POST':
+        if request.method == 'POST':
             if subscription.exists():
                 return Response({'error': 'Вы уже подписаны'},
                                 status=status.HTTP_400_BAD_REQUEST)
-
             if user == author:
-                return Response({'error': 'Невозможно подписатсья на себя'},
+                return Response({'error': 'Невозможно подписаться на себя'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            serializer = FollowSerializer
+            serializer = FollowSerializer(author, context={'request': request})
             Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         if request.method == 'DELETE':
             if subscription.exists():
                 subscription.delete()
@@ -49,12 +49,11 @@ class UserViewSet(UserViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, permission_classes=[IsAuthenticated])
-    def subscription(self, requset):
-        user = requset.user
+    def subscriptions(self, request):
+        user = request.user
         follows = User.objects.filter(following__user=user)
         page = self.paginate_queryset(follows)
         serializer = FollowSerializer(
             page, many=True,
-            context={'requset': requset}
-        )
+            context={'request': request})
         return self.get_paginated_response(serializer.data)

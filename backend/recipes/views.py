@@ -1,5 +1,13 @@
+from api.filters import IngredientFilter, RecipeFilter
+from api.paginations import LimitPagination
+from api.permissions import IsAuthorOrReadOnly
+from api.serializers import (FavoriteSerializer, IngredientSerializer,
+                             RecipeSerializer, ShoppingCartSerializer,
+                             TagSerializer)
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from reportlab.pdfbase import pdfmetrics, ttfonts
 from reportlab.pdfgen import canvas
 from rest_framework import status, viewsets
@@ -7,22 +15,19 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from api.paginations import LimitPagination
-from api.permissions import IsAuthorOrReadOnly
-from api.serializers.recipes import (FavoriteSerializer, IngredientSerializer,
-                                     RecipeSerializer,
-                                     ShoppingCartSerializer, TagSerializer)
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для обработки запросов на получение ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
     permission_classes = (AllowAny,)
+    pagination_class = None
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для обработки запросов на получение тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
@@ -30,8 +35,13 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    """Вьюсет для работы с рецептами.
+     Обработка запросов создания/получения/редактирования/удаления рецептов
+     Добавление/удаление рецепта в избранное и список покупок"""
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrReadOnly,)
     pagination_class = LimitPagination
 
@@ -45,11 +55,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST':
             serializer = serializer_class(
                 data={'user': user.id, 'recipe': pk},
-                context={'requser': self.request}
+                context={'request': self.request}
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         if self.request.method == 'DELETE':
             if object.exists():
                 object.delete()
@@ -66,8 +77,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.action_post_delete(pk, ShoppingCartSerializer)
 
     @action(detail=False)
-    def downlowd_shopping_cart(self, requset):
-        response = HttpResponse(content_type='apication/pdf')
+    def download_shopping_cart(self, request):
+        response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = (
             "attachment; filename='shopping_cart.pdf'"
         )
@@ -77,7 +88,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         p.setFont('Arial', 14)
 
         ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_cart__user=requset.user).values_list(
+            recipe__shopping_cart__user=request.user).values_list(
             'ingredient__name', 'amount', 'ingredient__measurement_unit')
 
         ingr_list = {}
