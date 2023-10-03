@@ -109,6 +109,7 @@ class RecipeIngredient(models.Model):
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ингредиент',
+        related_name='in_recipe',
     )
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
@@ -166,7 +167,7 @@ class ShoppingCart(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name='shopping_cart'
+        related_name='shopping_user'
     )
     recipe = models.ForeignKey(
         Recipe,

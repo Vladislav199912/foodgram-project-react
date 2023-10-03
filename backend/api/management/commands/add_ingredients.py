@@ -19,5 +19,4 @@ class Command(BaseCommand):
                 for row in reader
             )
             Ingredient.objects.bulk_create(ingredients)
-        print(Ingredient.objects.count(),' ингредиентов загружено в БД')
-         
+        print(Ingredient.objects.count(), ' ингредиентов загружено в БД')
