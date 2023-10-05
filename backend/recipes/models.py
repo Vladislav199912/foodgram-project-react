@@ -56,8 +56,9 @@ class Recipe(models.Model):
         related_name='recipe'
     )
     image = models.ImageField(
-        verbose_name='Картинка',
-        upload_to='recipes/'
+        blank=True,
+        verbose_name='Фото',
+        upload_to='recipes/images'
     )
     name = models.CharField(
         verbose_name='Название',

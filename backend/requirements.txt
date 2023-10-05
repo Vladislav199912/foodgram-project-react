@@ -12,3 +12,4 @@ djangorestframework-simplejwt==4.7.2
 reportlab==3.6.11
 django-filter==23.2
 weasyprint==56.0
+drf-base64==2.0

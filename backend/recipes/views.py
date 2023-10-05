@@ -1,22 +1,18 @@
 from api.filters import IngredientFilter, RecipeFilter
 from api.paginations import LimitPagination
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                             RecipeSerializer, ShoppingCartSerializer,
-                             TagSerializer, GetRecipeSerializer)
-from django.http import HttpResponse
+from api.serializers import (FavoriteSerializer, GetRecipeSerializer,
+                             IngredientSerializer, RecipeSerializer,
+                             TagSerializer)
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, Favorite, ShoppingCart
-from reportlab.pdfbase import pdfmetrics, ttfonts
-from reportlab.pdfgen import canvas
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import F, Sum
-from django.template.loader import render_to_string
-from weasyprint import HTML
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -47,19 +43,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return GetRecipeSerializer
         elif self.action in ('create', 'partial_update'):
             return RecipeSerializer
-    
-    def get_serializer_context(self):
-        """Метод для передачи контекста. """
 
+    def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'request': self.request})
         return context
-    
-    @action(detail=True, methods=['get','post', 'delete'],
+
+    @action(detail=True, methods=['get', 'post', 'delete'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         if request.method == 'POST':
-            if Favorite.objects.filter(user=request.user, recipe__id=pk).exists():
+            if Favorite.objects.filter(user=request.user,
+                                       recipe__id=pk).exists():
                 return Response({
                     'errors': 'Рецепт уже добавлен в список'
                 }, status=status.HTTP_400_BAD_REQUEST)
@@ -76,7 +71,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'errors': 'Рецепт уже удален'
             }, status=status.HTTP_400_BAD_REQUEST)
         return None
-
 
     @action(
         detail=True, methods=('post', 'delete',),
@@ -108,10 +102,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'которого нет в списке покупок ',
                 status=status.HTTP_400_BAD_REQUEST
             )
+
     @staticmethod
     def ingredients_to_txt(ingredients):
-        """Метод для объединения ингредиентов в список для загрузки"""
-
         shopping_list = ''
         for ingredient in ingredients:
             shopping_list += (
@@ -129,9 +122,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_name='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
-        """Метод для загрузки ингредиентов и их количества
-         для выбранных рецептов"""
-
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=request.user
         ).values(
