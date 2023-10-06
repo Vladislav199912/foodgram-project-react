@@ -25,34 +25,24 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    """Модель для описания тега"""
-
     name = models.CharField(
-        max_length=50,
-        unique=True,
-        verbose_name='Название тэга')
+        verbose_name='Название',
+        max_length=16,
+        unique=True
+    )
     color = models.CharField(
-        'Цвет',
-        max_length=7,
-        unique=True,
-        validators=[
-            RegexValidator(
-                regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
-                message='Введенное значение не является цветом в формате HEX!'
-            )
-        ],
-        default='#000000',
-        help_text='Введите цвет тега. Например, #006400',
+        max_length=16,
+        verbose_name='Цвет'
     )
     slug = models.SlugField(
-        max_length=100,
-        unique=True,
-        verbose_name='Уникальный слаг')
+        max_length=16,
+        verbose_name='Слаг',
+        unique=True
+    )
 
     class Meta:
-        ordering = ('name',)
-        verbose_name = 'Тэг'
-        verbose_name_plural = 'Тэги'
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
 
     def __str__(self):
         return f'{self.name}'
