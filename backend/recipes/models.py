@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
@@ -25,25 +25,34 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
+    """Модель для описания тега"""
+
     name = models.CharField(
-        verbose_name='Название',
-        max_length=16,
-        unique=True
-    )
+        max_length=50,
+        unique=True,
+        verbose_name='Название тэга')
     color = models.CharField(
-        max_length=16,
-        verbose_name='Цвет'
+        'Цвет',
+        max_length=7,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+                message='Введенное значение не является цветом в формате HEX!'
+            )
+        ],
+        default='#000000',
+        help_text='Введите цвет тега. Например, #006400',
     )
     slug = models.SlugField(
-        max_length=16,
-        verbose_name='Слаг',
-        unique=True
-    )
+        max_length=100,
+        unique=True,
+        verbose_name='Уникальный слаг')
 
     class Meta:
         ordering = ('name',)
-        verbose_name = 'Тег'
-        verbose_name_plural = 'Теги'
+        verbose_name = 'Тэг'
+        verbose_name_plural = 'Тэги'
 
     def __str__(self):
         return f'{self.name}'
