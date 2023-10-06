@@ -1,3 +1,5 @@
+name: Main GoodFoodGram workflow
+
 on:
   push:
     branches:
