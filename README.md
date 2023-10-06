@@ -80,5 +80,9 @@
 # Автор:  
     Ермаков Владислав, https://github.com/Vladislav199912
 # Данные для доступа:
-    
+    Login: 277122@mail.ru
+    Password: Vladas182424
+    domen: https://vfoodgrame.ddns.net/
+    IP: 51.250.23.87
+    PORT: 8080
 
