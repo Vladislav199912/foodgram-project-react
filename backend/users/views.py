@@ -25,19 +25,23 @@ class UsersViewSet(UserViewSet):
 
     @action(methods=['POST', 'DELETE'],
             detail=True, )
-    def subscribe(self, request, id):
+    def subscribe(self, request, **kwargs):
         user = request.user
-        author = get_object_or_404(User, id=id)
-        subscription = Follow.objects.filter(
-            user=user, author=author)
-        if request.methd == 'POST':
+        author_id = self.kwargs.get('id')
+        author = get_object_or_404(User, id=author_id)
+
+        if request.method == 'POST':
             serializer = FollowSerializer(author,
                                           data=request.data,
-                                          context={'requset': request})
+                                          context={"request": request})
             serializer.is_valid(raise_exception=True)
             Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         if request.method == 'DELETE':
+            subscription = get_object_or_404(Follow,
+                                             user=user,
+                                             author=author)
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
