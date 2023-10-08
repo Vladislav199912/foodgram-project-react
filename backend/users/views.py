@@ -24,11 +24,13 @@ class UsersViewSet(UserViewSet):
         return super().get_permissions()
 
     @action(methods=['POST', 'DELETE'],
-            detail=True, )
-    def subscribe(self, request, **kwargs):
+            detail=True,
+            permission_classes=[IsAuthenticated],)
+    def subscribe(self, request, id):
         user = request.user
-        author_id = self.kwargs.get('id')
-        author = get_object_or_404(User, id=author_id)
+        author = get_object_or_404(User, id=id)
+        subscription = Follow.objects.filter(
+            user=user, author=author)
 
         if request.method == 'POST':
             serializer = FollowSerializer(author,

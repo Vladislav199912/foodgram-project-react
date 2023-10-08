@@ -201,15 +201,12 @@ class RecipeInfoSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class FollowSerializer(UserSerializer):
-    recipes_count = SerializerMethodField()
-    recipes = SerializerMethodField()
+class FollowSerializer(UsersSerializer):
+    recipes = SerializerMethodField(read_only=True)
+    recipes_count = SerializerMethodField(read_only=True)
 
     class Meta(UsersSerializer.Meta):
-        fields = UserSerializer.Meta.fields + (
-            'recipes_count', 'recipes'
-        )
-        read_only_fields = ('email', 'username')
+        fields = UsersSerializer.Meta.fields + ('recipes', 'recipes_count')
 
     def validate(self, data):
         author = self.instance
@@ -226,14 +223,16 @@ class FollowSerializer(UserSerializer):
             )
         return data
 
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
+    def get_recipes(self, object):
+        from api.serializers import RecipeInfoSerializer
 
-    def get_recipes(self, obj):
         request = self.context.get('request')
-        limit = request.GET.get('recipes_limit')
-        recipes = obj.recipes.all()
-        if limit:
-            recipes = recipes[:int(limit)]
-        serializer = RecipeInfoSerializer(recipes, many=True, read_only=True)
-        return serializer.data
+        context = {'request': request}
+        recipe_limit = request.query_params.get('recipe_limit')
+        queryset = object.recipes.all()
+        if recipe_limit:
+            queryset = queryset[:int(recipe_limit)]
+        return RecipeInfoSerializer(queryset, context=context, many=True).data
+
+    def get_recipes_count(self, object):
+        return object.recipes.count()
