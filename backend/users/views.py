@@ -24,8 +24,7 @@ class UsersViewSet(UserViewSet):
         return super().get_permissions()
 
     @action(methods=['POST', 'DELETE'],
-            detail=True,
-            permission_classes=[IsAuthenticated],)
+            detail=True, )
     def subscribe(self, request, id):
         user = request.user
         author = get_object_or_404(User, id=id)
@@ -34,8 +33,7 @@ class UsersViewSet(UserViewSet):
 
         if request.method == 'POST':
             serializer = FollowSerializer(author,
-                                          data=request.data,
-                                          context={"request": request})
+                                          context={'request': request})
             serializer.is_valid(raise_exception=True)
             Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
