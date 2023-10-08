@@ -208,6 +208,19 @@ class FollowSerializer(UsersSerializer):
     class Meta(UsersSerializer.Meta):
         fields = UsersSerializer.Meta.fields + ('recipes', 'recipes_count')
 
+    def validate(self, data):
+        author = self.instance
+        user = self.context.get('request').user
+        if Follow.objects.filter(author=author, user=user).exists():
+            raise ValidationError(
+                {'error': 'Вы уже подписаны на этого пользователя!'}
+            )
+        if user == author:
+            raise ValidationError(
+                {'error': 'Вы не можете подписаться на самого себя!'}
+            )
+        return data
+
     def get_recipes(self, object):
         from api.serializers import RecipeInfoSerializer
 
