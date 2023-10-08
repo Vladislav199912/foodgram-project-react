@@ -14,14 +14,7 @@ from users.models import Follow, User
 class UsersViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
     pagination_class = LimitPagination
-    http_method_names = ['get', 'post', 'delete', 'head']
-
-    def get_permissions(self):
-        if self.action == 'me':
-            self.permission_classes = (IsAuthenticated,)
-        return super().get_permissions()
 
     @action(
         detail=True,

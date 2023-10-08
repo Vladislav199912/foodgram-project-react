@@ -203,8 +203,8 @@ class RecipeInfoSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(UsersSerializer):
-    recipes = SerializerMethodField(read_only=True)
-    recipes_count = SerializerMethodField(read_only=True)
+    recipes = SerializerMethodField()
+    recipes_count = SerializerMethodField()
 
     class Meta(UsersSerializer.Meta):
         fields = UsersSerializer.Meta.fields + ('recipes', 'recipes_count')
