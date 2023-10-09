@@ -10,7 +10,7 @@ from api.serializers import FollowSerializer, UsersSerializer
 from users.models import Follow, User
 
 
-class UserViewSet(UserViewSet):
+class UsersViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
     pagination_class = LimitPagination
