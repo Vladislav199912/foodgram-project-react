@@ -26,7 +26,6 @@ INSTALLED_APPS = [
 
     'recipes.apps.RecipesConfig',
     'users.apps.UsersConfig',
-    'api.apps.ApiConfig'
 ]
 
 MIDDLEWARE = [
@@ -146,8 +145,8 @@ DJOSER = {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly']
     },
     "SERIALIZERS": {
-        "user_create": "api.serializers.UsersCreateSerializer",
-        "user": "api.serializers.UsersSerializer",
-        "current_user": "api.serializers.UsersSerializer",
+        "user_create": "users.serializers.UsersCreateSerializer",
+        "user": "users.serializers.UsersSerializer",
+        "current_user": "users.serializers.UsersSerializer",
     },
 }

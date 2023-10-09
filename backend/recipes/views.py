@@ -6,14 +6,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from api.filters import IngredientFilter, RecipeFilter
-from api.paginations import LimitPagination
-from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (FavoriteSerializer, GetRecipeSerializer,
-                             IngredientSerializer, RecipeSerializer,
-                             TagSerializer)
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                     ShoppingCart, Tag)
+from .serializers import (FavoriteSerializer, GetRecipeSerializer,
+                          IngredientSerializer, RecipeSerializer,
+                          TagSerializer)
+from users.filters import IngredientFilter, RecipeFilter
+from users.paginations import LimitPagination
+from users.permissions import IsAuthorOrReadOnly
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
