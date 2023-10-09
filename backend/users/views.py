@@ -2,8 +2,7 @@ from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.paginations import LimitPagination
@@ -11,21 +10,15 @@ from api.serializers import FollowSerializer, UsersSerializer
 from users.models import Follow, User
 
 
-class UsersViewSet(UserViewSet):
+class UserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
     pagination_class = LimitPagination
-    http_method_names = ['get', 'post', 'delete', 'head']
-
-    def get_permissions(self):
-        if self.action == 'me':
-            self.permission_classes = (IsAuthenticated,)
-        return super().get_permissions()
 
     @action(
         detail=True,
-        methods=['POST', 'DELETE'],
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated],
     )
     def subscribe(self, request, id):
         user = request.user
@@ -48,9 +41,9 @@ class UsersViewSet(UserViewSet):
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
         user = request.user
-        follows = User.objects.filter(following__user=user)
-        page = self.paginate_queryset(follows)
+        queryset = User.objects.filter(following__user=user)
+        pages = self.paginate_queryset(queryset)
         serializer = FollowSerializer(
-            page, many=True,
-            context={'request': request})
+            pages, many=True, context={'request': request}
+        )
         return self.get_paginated_response(serializer.data)
