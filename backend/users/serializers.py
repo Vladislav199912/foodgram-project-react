@@ -19,7 +19,7 @@ class UsersCreateSerializer(UserCreateSerializer):
             'last_name',
             'password')
 
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {'password': {'write_only': True}}
 
     def validate_username(self, value):
         if value == "me":
@@ -29,7 +29,7 @@ class UsersCreateSerializer(UserCreateSerializer):
         return value
 
 
-class UsersSerializer(UserSerializer):
+class CustomUsersSerializer(UserSerializer):
     is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
@@ -50,7 +50,7 @@ class UsersSerializer(UserSerializer):
         return Follow.objects.filter(user=user, author=object.id).exists()
 
 
-class FollowSerializer(UsersSerializer):
+class FollowSerializer(CustomUsersSerializer):
     recipes_count = SerializerMethodField()
     recipes = SerializerMethodField()
 

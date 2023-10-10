@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from recipes.models import (Ingredient, Recipe, RecipeIngredient, ShoppingCart,
                             Tag)
-from users.serializers import UsersSerializer
+from users.serializers import CustomUsersSerializer
 
 
 class Base64ImageField(serializers.ImageField):
@@ -57,7 +57,7 @@ class AddIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(use_url=True)
-    author = UsersSerializer(read_only=True)
+    author = CustomUsersSerializer(read_only=True)
     ingredients = AddIngredientSerializer(many=True)
 
     class Meta:
@@ -115,7 +115,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 class GetRecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    author = UsersSerializer(read_only=True)
+    author = CustomUsersSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(read_only=True, many=True,
                                              source='recipe_ingredient')
     is_favorited = serializers.SerializerMethodField(read_only=True)
