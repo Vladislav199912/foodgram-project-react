@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from recipes.models import (Ingredient, Recipe, RecipeIngredient, ShoppingCart,
                             Tag)
-from backend.users.serializers import UsersSerializer
+from users.serializers import UsersSerializer
 
 
 class Base64ImageField(serializers.ImageField):

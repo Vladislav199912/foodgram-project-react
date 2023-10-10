@@ -4,7 +4,6 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 
-from recipes.serializers import RecipeInfoSerializer
 from users.models import Follow, User
 
 
@@ -79,6 +78,7 @@ class FollowSerializer(UsersSerializer):
         return obj.recipes.count()
 
     def get_recipes(self, obj):
+        from recipes.serializers import RecipeInfoSerializer
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
         recipes = obj.recipes.all()
