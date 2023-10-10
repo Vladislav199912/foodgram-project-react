@@ -5,14 +5,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Follow, User
-from .paginations import LimitPagination
-from .serializers import CustomUsersSerializer, FollowSerializer
+from users.models import Follow, User
+from users.paginations import LimitPagination
+from users.serializers import FollowSerializer, UsersSerializer
 
 
 class UsersViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUsersSerializer
+    serializer_class = UsersSerializer
     pagination_class = LimitPagination
 
     @action(

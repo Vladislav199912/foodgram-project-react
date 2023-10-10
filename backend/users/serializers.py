@@ -29,7 +29,7 @@ class UsersCreateSerializer(UserCreateSerializer):
         return value
 
 
-class CustomUsersSerializer(UserSerializer):
+class UsersSerializer(UserSerializer):
     is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
@@ -50,7 +50,7 @@ class CustomUsersSerializer(UserSerializer):
         return Follow.objects.filter(user=user, author=object.id).exists()
 
 
-class FollowSerializer(CustomUsersSerializer):
+class FollowSerializer(UsersSerializer):
     recipes_count = SerializerMethodField()
     recipes = SerializerMethodField()
 
