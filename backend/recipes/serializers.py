@@ -5,8 +5,8 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from recipes.models import (Ingredient, Recipe, RecipeIngredient, ShoppingCart,
-                            Tag)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.serializers import UsersSerializer
 
 
@@ -142,13 +142,34 @@ class GetRecipeSerializer(serializers.ModelSerializer):
         ).exists()
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    image = Base64ImageField()
-
+class RepresentationSerializer(serializers.ModelSerializer):
     class Meta:
-
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RepresentationSerializer(
+            instance.recipe, context=context).data
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShoppingCart
+        fields = ('user', 'recipe')
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RepresentationSerializer(
+            instance.recipe, context=context).data
 
 
 class RecipeInfoSerializer(serializers.ModelSerializer):
