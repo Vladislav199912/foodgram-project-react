@@ -116,7 +116,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             shopping_list += (
                 f"{ingredient['ingredient__name']}  - "
                 f"{ingredient['sum']}"
-                f"({ingredient['ingredient__measurement_unit']})\n\n"
+                f"({ingredient['ingredient__measurement_unit']})"
             )
         return shopping_list
 
