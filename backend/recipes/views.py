@@ -6,11 +6,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from recipes.serializers import (FavoriteSerializer, GetRecipeSerializer,
                                  IngredientSerializer, RecipeSerializer,
                                  TagSerializer)
-from recipes.utils import send_message
 from users.filters import IngredientFilter, RecipeFilter
 from users.paginations import LimitPagination
 from users.permissions import IsAuthorOrReadOnly
@@ -109,6 +109,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    @staticmethod
+    def ingredients_to_txt(ingredients):
+        shopping_list = ''
+        for ingredient in ingredients:
+            shopping_list += (
+                f"{ingredient['ingredient__name']}  - "
+                f"{ingredient['sum']} "
+                f"({ingredient['ingredient__measurement_unit']}\n"
+            )
+        return shopping_list
+
     @action(
         detail=False,
         methods=('get',),
@@ -117,11 +128,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_name='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
-        ingredient_lst = ShoppingCart.objects.filter(
-            user=request.user
-        ).values_list(
-            'recipe_id__ingredients__name',
-            'recipe_id__ingredients__measurement_unit',
-            Sum('recipe_id__ingredients__amount_ingredients__amount'))
-        ingredient_lst = set(ingredient_lst)
-        return send_message(ingredient_lst)
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(sum=Sum('amount'))
+        shopping_list = self.ingredients_to_txt(ingredients)
+        return Response(shopping_list, content_type='text/plain')
