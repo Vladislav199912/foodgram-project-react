@@ -109,17 +109,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             )
 
-    @staticmethod
-    def ingredients_to_txt(ingredients):
-        shopping_list = ''
-        for ingredient in ingredients:
-            shopping_list += (
-                f"{ingredient['ingredient__name']}  - "
-                f"{ingredient['sum']}"
-                f"({ingredient['ingredient__measurement_unit']})\n"
-            )
-        return shopping_list
-
     @action(
         detail=False,
         methods=('get',),
