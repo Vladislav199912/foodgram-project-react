@@ -83,20 +83,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
         url_name='shopping_cart', url_path='shopping_cart',
     )
-    @action(
-        detail=True,
-        methods=['POST', 'DELETE'],
-        permission_classes=(IsAuthenticated,)
-    )
     def shopping_cart(self, request, pk):
-        return self.post_del_recipe(request, pk, ShoppingCart)
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
 
-    @action(
-        detail=False,
-        methods=['GET'],
-        permission_classes=(IsAuthenticated,)
-    )
-    def download_shopping_cart(self, request):
+        if request.method == 'POST':
+            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    f'Повторно - {recipe.name} добавить нельзя,'
+                    'он уже есть в списке покупок',
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            ShoppingCart.objects.create(user=user, recipe=recipe)
+            serializer = FavoriteSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            obj = ShoppingCart.objects.filter(user=user, recipe__id=pk)
+            if obj.exists():
+                obj.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                f'Нельзя удалить рецепт - {recipe.name}, '
+                'которого нет в списке покупок ',
+
+            )
+
+    def download_shopping_cart_txt(self, request):
         user = request.user
         purchases = ShoppingCart.objects.filter(user=user)
         file = 'shopping-list.txt'
