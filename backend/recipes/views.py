@@ -109,7 +109,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             )
 
-    def download_shopping_cart_txt(self, request):
+    @staticmethod
+    def ingredients_to_txt(ingredients):
+        shopping_list = ''
+        for ingredient in ingredients:
+            shopping_list += (
+                f"{ingredient['ingredient__name']}  - "
+                f"{ingredient['sum']}"
+                f"({ingredient['ingredient__measurement_unit']})\n"
+            )
+        return shopping_list
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+        url_path='download_shopping_cart',
+        url_name='download_shopping_cart',
+    )
+    def download_shopping_cart(self, request):
         user = request.user
         purchases = ShoppingCart.objects.filter(user=user)
         file = 'shopping-list.txt'
