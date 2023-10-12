@@ -7,11 +7,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.serializers import (FavoriteSerializer, GetRecipeSerializer,
-                                 IngredientSerializer, RecipeSerializer,
-                                 TagSerializer)
+                                 IngredientSerializer, RecipeIngredient,
+                                 RecipeSerializer, TagSerializer)
 from users.filters import IngredientFilter, RecipeFilter
 from users.paginations import LimitPagination
 from users.permissions import IsAuthorOrReadOnly
@@ -110,19 +109,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             )
 
-    @action(
-        detail=False,
-        methods=('get',),
-        permission_classes=(IsAuthenticated,),
-        url_path='download_shopping_cart',
-        url_name='download_shopping_cart',
-    )
-    @action(
-        methods=['get'],
-        detail=False,
-        permission_classes=[IsAuthenticated]
-    )
-    def download_shopping_cart(
+    @staticmethod
+    def txt_shopping_cart(
         self, request, shopping_list='Список покупок:\n'
     ):
         ingredients = RecipeIngredient.objects.filter(
@@ -140,3 +128,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response = HttpResponse(shopping_list, 'Content-Type: application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{file}.pdf"'
         return response
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+        url_path='download_shopping_cart',
+        url_name='download_shopping_cart',
+    )
+    def download_shopping_cart(self, request):
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(sum=Sum('amount'))
+        shopping_list = self.ingredients_to_txt(ingredients)
+        return Response(shopping_list, content_type='text/plain')
