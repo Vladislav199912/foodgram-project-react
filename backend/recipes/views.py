@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+from recipes.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from recipes.serializers import (FavoriteSerializer, GetRecipeSerializer,
                                  IngredientSerializer, RecipeSerializer,
@@ -83,56 +83,38 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
         url_name='shopping_cart', url_path='shopping_cart',
     )
+    @action(
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=(IsAuthenticated,)
+    )
     def shopping_cart(self, request, pk):
-        user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
-
-        if request.method == 'POST':
-            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-                return Response(
-                    f'Повторно - {recipe.name} добавить нельзя,'
-                    'он уже есть в списке покупок',
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            ShoppingCart.objects.create(user=user, recipe=recipe)
-            serializer = FavoriteSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            obj = ShoppingCart.objects.filter(user=user, recipe__id=pk)
-            if obj.exists():
-                obj.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                f'Нельзя удалить рецепт - {recipe.name}, '
-                'которого нет в списке покупок ',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    @staticmethod
-    def ingredients_to_txt(ingredients):
-        shopping_list = ''
-        for ingredient in ingredients:
-            shopping_list += (
-                f"{ingredient['ingredient__name']}  - "
-                f"{ingredient['sum']}"
-                f"({ingredient['ingredient__measurement_unit']})\n\n"
-            )
-        return shopping_list
+        return self.post_del_recipe(request, pk, ShoppingCart)
 
     @action(
         detail=False,
-        methods=('get',),
-        permission_classes=(IsAuthenticated,),
-        url_path='download_shopping_cart',
-        url_name='download_shopping_cart',
+        methods=['GET'],
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_cart__user=request.user
-        ).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).annotate(sum=Sum('amount'))
-        shopping_list = self.ingredients_to_txt(ingredients)
-        return Response(shopping_list, content_type='text/plain')
+        user = request.user
+        purchases = ShoppingCart.objects.filter(user=user)
+        file = 'shopping-list.txt'
+        with open(file, 'w') as f:
+            shop_cart = dict()
+            for purchase in purchases:
+                ingredients = IngredientAmount.objects.filter(
+                    recipe=purchase.recipe.id
+                )
+                for r in ingredients:
+                    i = Ingredient.objects.get(pk=r.ingredient.id)
+                    point_name = f'{i.name} ({i.measurement_unit})'
+                    if point_name in shop_cart.keys():
+                        shop_cart[point_name] += r.amount
+                    else:
+                        shop_cart[point_name] = r.amount
+
+            for name, amount in shop_cart.items():
+                f.write(f'* {name} - {amount}\n')
+
+        return FileResponse(open(file, 'rb'), as_attachment=True)
