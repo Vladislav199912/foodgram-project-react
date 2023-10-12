@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
@@ -191,44 +191,27 @@ class ShoppingCart(models.Model):
         return f'{self.recipe} в корзине у {self.user}'
 
 
-class IngredientAmount(models.Model):
-    ingredient = models.ForeignKey(
-        Ingredient,
-        on_delete=models.CASCADE,
-        related_name='amount_ingredient',
-        verbose_name='Ингредиент',
-        help_text='Ингредиент',
-    )
+class AmountIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='amount_ingredient',
-        verbose_name='Рецепт',
-        help_text='Рецепт',
+        related_name="recipe",
+        verbose_name="Рецепт",
     )
-    amount = models.PositiveSmallIntegerField(
-        validators=[
-            MinValueValidator(
-                1, 'Количество ингредиентов не может быть меньше 1!'
-            ),
-            MaxValueValidator(
-                1000, 'Количество ингредиентов не может быть больше 1000!'
-            )
-        ],
-        default=1,
-        verbose_name='Количество',
-        help_text='Количество',
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name="ingredient",
+        verbose_name="Ингредиент",
     )
+    amount = models.PositiveSmallIntegerField("Количество", blank=False)
 
     class Meta:
-        verbose_name = 'Кол-во ингредиентов'
-        verbose_name_plural = 'Кол-во ингредиентов'
+        verbose_name = "Количество ингредиента"
+        verbose_name_plural = "Количество ингредиентов"
         constraints = [
             models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
-                name='unique_ingredient_in_recipe',
+                fields=["recipe", "ingredient"],
+                name="unique_ingredient",
             )
         ]
-
-    def __str__(self):
-        return f'{self.ingredient} {self.recipe}'
