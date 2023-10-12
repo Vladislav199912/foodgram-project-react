@@ -104,17 +104,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    @staticmethod
-    def ingredients_to_txt(ingredients):
-        shopping_list = "Список покупок: \n"
-        for ingredient in ingredients:
-            shopping_list += (
-                f'{ingredient["ingredient__name"]} - '
-                f'{ingredient["ingredient_total"]} '
-                f'({ingredient["ingredient__measurement_unit"]}) \n'
-            )
-        return shopping_list
-
     @action(
         detail=False,
         methods=('get',),
@@ -129,5 +118,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(sum=Sum('amount'))
+        shopping_list = "Список покупок: \n"
+        for ingredient in ingredients:
+            shopping_list += (
+                f'{ingredient["ingredient__name"]} - '
+                f"{ingredient['sum']}"
+                f'({ingredient["ingredient__measurement_unit"]}) \n'
+            )
         shopping_list = self.ingredients_to_txt(ingredients)
         return Response(shopping_list, content_type='text/plain')
