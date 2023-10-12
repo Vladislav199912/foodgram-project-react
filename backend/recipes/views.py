@@ -1,4 +1,5 @@
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -118,12 +119,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(sum=Sum('amount'))
+        ingredients = ingredients.order_by("ingredient__name")
         shopping_list = "Список покупок: \n"
         for ingredient in ingredients:
             shopping_list += (
                 f'{ingredient["ingredient__name"]} - '
-                f"{ingredient['sum']}"
+                f'{ingredient["ingredient_total"]} '
                 f'({ingredient["ingredient__measurement_unit"]}) \n'
             )
-        shopping_list = self.ingredients_to_txt(ingredients)
-        return Response(shopping_list, content_type='text/plain')
+            response = HttpResponse(
+                shopping_list, content_type="text/plain; charset=utf8"
+            )
+            response[
+                "Content-Disposition"
+            ] = 'attachment; filename="shopping_list.txt"'
+        return response
