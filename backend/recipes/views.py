@@ -7,8 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (AmountIngredient, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
 from recipes.serializers import (FavoriteSerializer, GetRecipeSerializer,
                                  IngredientSerializer, RecipeSerializer,
                                  TagSerializer)
@@ -109,10 +109,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=False,
         methods=('get',),
         permission_classes=(IsAuthenticated,),
-        url_path='download_shopping_cart',
-        url_name='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
+        ingredients = AmountIngredient.objects.select_related(
+            "recipe", "ingredient"
+        )
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=request.user
         ).values(
