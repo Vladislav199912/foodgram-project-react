@@ -111,14 +111,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             url_path='download_shopping_cart',
             url_name='download_shopping_cart',)
     def download_shopping_cart(self, request, **kwargs):
-        ingredients = (
-            RecipeIngredient.objects
-            .filter(recipe__shopping_recipe__user=request.user)
-            .values('ingredient')
-            .annotate(total_amount=Sum('amount'))
-            .values_list('ingredient__name', 'total_amount',
-                         'ingredient__measurement_unit')
-        )
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values('ingredient').values_list(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(sum=Sum('amount'))
         file_list = []
         [file_list.append(
             '{} - {} {}.'.format(*ingredient)) for ingredient in ingredients]
