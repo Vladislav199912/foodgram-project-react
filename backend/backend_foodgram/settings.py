@@ -150,3 +150,5 @@ DJOSER = {
         "current_user": "users.serializers.UsersSerializer",
     },
 }
+
+FILE_NAME = 'shopping_cart.txt'
