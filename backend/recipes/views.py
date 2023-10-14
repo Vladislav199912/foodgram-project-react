@@ -52,28 +52,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
         context.update({'request': self.request})
         return context
 
-    @action(detail=True, methods=['get', 'post', 'delete'],
+    @staticmethod
+    def post_method_for_action(request, pk, serializers):
+        data = {'user': request.user.id, 'recipe': pk}
+        serializer = serializers(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['POST'], detail=True,
             permission_classes=[IsAuthenticated])
-    def favorite(self, request, pk=None):
-        if request.method == 'POST':
-            if Favorite.objects.filter(user=request.user,
-                                       recipe__id=pk).exists():
-                return Response({
-                    'errors': 'Рецепт уже добавлен в список'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            recipe = get_object_or_404(Recipe, id=pk)
-            Favorite.objects.create(user=request.user, recipe=recipe)
-            serializer = FavoriteSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
-            obj = Favorite.objects.filter(user=request.user, recipe__id=pk)
-            if obj.exists():
-                obj.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response({
-                'errors': 'Рецепт уже удален'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        return None
+    def favorite(self, request, pk):
+        return self.post_method_for_action(request=request, pk=pk,
+                                           serializers=FavoriteSerializer)
+
+    @staticmethod
+    def delete_method_for_actions(request, pk, model):
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
+        model_object = get_object_or_404(model, user=user, recipe=recipe)
+        model_object.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk):
+        return self.delete_method_for_actions(
+            request=request, pk=pk, model=Favorite
+        )
 
     @action(
         detail=True, methods=('post', 'delete',),
